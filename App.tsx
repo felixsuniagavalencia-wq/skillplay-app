@@ -4,8 +4,9 @@ import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
 import ResultScreen from './screens/ResultScreen';
+import WalletScreen from './screens/WalletScreen';
 
-type Screen = 'login' | 'home' | 'game' | 'result';
+type Screen = 'login' | 'home' | 'game' | 'result' | 'wallet';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('login');
@@ -33,10 +34,6 @@ export default function App() {
     setScreen('result');
   };
 
-  const handlePlayAgain = () => {
-    setScreen('home');
-  };
-
   return (
     <>
       <StatusBar style="light" />
@@ -45,7 +42,7 @@ export default function App() {
         <HomeScreen
           userId={userId}
           onStartGame={handleStartGame}
-          onGoToWallet={() => {}}
+          onGoToWallet={() => setScreen('wallet')}
         />
       )}
       {screen === 'game' && (
@@ -60,8 +57,14 @@ export default function App() {
       {screen === 'result' && (
         <ResultScreen
           result={result}
-          onPlayAgain={handlePlayAgain}
+          onPlayAgain={() => setScreen('home')}
           onGoHome={() => setScreen('home')}
+        />
+      )}
+      {screen === 'wallet' && (
+        <WalletScreen
+          userId={userId}
+          onBack={() => setScreen('home')}
         />
       )}
     </>
