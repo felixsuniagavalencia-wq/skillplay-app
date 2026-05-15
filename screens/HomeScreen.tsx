@@ -9,7 +9,7 @@ const ENTRY_FEES = [0.50, 1.00, 2.50, 5.00, 10.00];
 
 export default function HomeScreen({ userId, onStartGame, onGoToWallet }: {
   userId: string;
-  onStartGame: (sessionId: string, questions: any[]) => void;
+  onStartGame: (sessionId: string, questions: any[], difficulty: string) => void;
   onGoToWallet: () => void;
 }) {
   const [balance, setBalance] = useState(0);
@@ -42,7 +42,7 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet }: {
       });
       const data = await res.json();
       if (data.sessionId) {
-        onStartGame(data.sessionId, data.questions);
+        onStartGame(data.sessionId, data.questions, difficulty);
       } else {
         setError('Error generating questions. Try again.');
       }

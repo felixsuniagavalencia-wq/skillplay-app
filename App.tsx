@@ -13,6 +13,7 @@ export default function App() {
   const [userId, setUserId] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [questions, setQuestions] = useState<any[]>([]);
+  const [difficulty, setDifficulty] = useState('basico');
   const [result, setResult] = useState<any>(null);
   const [streak, setStreak] = useState(0);
 
@@ -21,9 +22,10 @@ export default function App() {
     setScreen('home');
   };
 
-  const handleStartGame = (sid: string, qs: any[]) => {
+  const handleStartGame = (sid: string, qs: any[], diff: string) => {
     setSessionId(sid);
     setQuestions(qs);
+    setDifficulty(diff);
     setScreen('game');
   };
 
@@ -51,6 +53,7 @@ export default function App() {
           questions={questions}
           userId={userId}
           streak={streak}
+          difficulty={difficulty}
           onFinish={handleFinish}
         />
       )}
