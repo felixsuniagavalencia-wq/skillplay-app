@@ -42,7 +42,7 @@ export default function App() {
   };
 
   return (
-    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.com.skillplay">
+    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
       <StatusBar style="light" />
       {screen === 'login' && <LoginScreen onLogin={handleLogin} />}
       {screen === 'home' && (
