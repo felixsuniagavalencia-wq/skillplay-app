@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
 import ResultScreen from './screens/ResultScreen';
 import WalletScreen from './screens/WalletScreen';
+import TopUpScreen from './screens/TopUpScreen';
 
-type Screen = 'login' | 'home' | 'game' | 'result' | 'wallet';
+type Screen = 'login' | 'home' | 'game' | 'result' | 'wallet' | 'topup';
+
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51TA7OVEwynFK9hgR85ZBTk4fBQOcfx5YGQxBlH8fbF5bFfB4PvNW3ffRjadVljR6zhwup4Er70by72wyQxK0JGII00HdoyPxFU';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('login');
@@ -16,6 +20,7 @@ export default function App() {
   const [difficulty, setDifficulty] = useState('basico');
   const [result, setResult] = useState<any>(null);
   const [streak, setStreak] = useState(0);
+  const [balance, setBalance] = useState(0);
 
   const handleLogin = (id: string) => {
     setUserId(id);
@@ -37,7 +42,7 @@ export default function App() {
   };
 
   return (
-    <>
+    <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.com.skillplay">
       <StatusBar style="light" />
       {screen === 'login' && <LoginScreen onLogin={handleLogin} />}
       {screen === 'home' && (
@@ -68,8 +73,19 @@ export default function App() {
         <WalletScreen
           userId={userId}
           onBack={() => setScreen('home')}
+          onTopUp={() => setScreen('topup')}
         />
       )}
-    </>
+      {screen === 'topup' && (
+        <TopUpScreen
+          userId={userId}
+          onBack={() => setScreen('wallet')}
+          onSuccess={(newBalance) => {
+            setBalance(newBalance);
+            setScreen('wallet');
+          }}
+        />
+      )}
+    </StripeProvider>
   );
 }

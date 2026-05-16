@@ -4,9 +4,10 @@ import WithdrawScreen from './WithdrawScreen';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
-export default function WalletScreen({ userId, onBack }: {
+export default function WalletScreen({ userId, onBack, onTopUp }: {
   userId: string;
   onBack: () => void;
+  onTopUp: () => void;
 }) {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -118,15 +119,20 @@ export default function WalletScreen({ userId, onBack }: {
       <View style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>Available Balance</Text>
         <Text style={styles.balance}>{balance.toFixed(2)} EUR</Text>
-        <TouchableOpacity
-          style={[styles.withdrawBtn, kycStatus !== 'verified' && styles.withdrawBtnDisabled]}
-          disabled={kycStatus !== 'verified'}
-          onPress={() => setShowWithdraw(true)}
-        >
-          <Text style={styles.withdrawBtnText}>
-            {kycStatus !== 'verified' ? 'Verify ID to Withdraw' : 'Withdraw Funds'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.btnRow}>
+          <TouchableOpacity style={styles.topUpBtn} onPress={onTopUp}>
+            <Text style={styles.topUpBtnText}>+ Add Credits</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.withdrawBtn, kycStatus !== 'verified' && styles.withdrawBtnDisabled]}
+            disabled={kycStatus !== 'verified'}
+            onPress={() => setShowWithdraw(true)}
+          >
+            <Text style={styles.withdrawBtnText}>
+              {kycStatus !== 'verified' ? '🔒 Withdraw' : 'Withdraw'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Text style={styles.sectionTitle}>Transaction History</Text>
@@ -140,7 +146,9 @@ export default function WalletScreen({ userId, onBack }: {
         transactions.map((tx, i) => (
           <View key={i} style={styles.txRow}>
             <View>
-              <Text style={styles.txType}>{tx.type === 'prize' ? '🏆 Prize' : '💸 Withdrawal'}</Text>
+              <Text style={styles.txType}>
+                {tx.type === 'prize' ? '🏆 Prize' : tx.type === 'deposit' ? '💳 Deposit' : '💸 Withdrawal'}
+              </Text>
               <Text style={styles.txDate}>{new Date(tx.createdAt?._seconds * 1000).toLocaleDateString()}</Text>
             </View>
             <Text style={[styles.txAmount, tx.type === 'withdrawal' && styles.txNegative]}>
@@ -170,9 +178,12 @@ const styles = StyleSheet.create({
   balanceCard: { backgroundColor: '#1F1535', borderRadius: 20, padding: 28, alignItems: 'center', marginBottom: 32 },
   balanceLabel: { color: '#6B7280', fontSize: 14, marginBottom: 8 },
   balance: { fontSize: 48, fontWeight: 'bold', color: '#FBBF24', marginBottom: 24 },
-  withdrawBtn: { backgroundColor: '#7C3AED', borderRadius: 12, paddingHorizontal: 32, paddingVertical: 14 },
+  btnRow: { flexDirection: 'row', gap: 12 },
+  topUpBtn: { backgroundColor: '#22C55E', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 14, flex: 1, alignItems: 'center' },
+  topUpBtnText: { color: 'white', fontSize: 15, fontWeight: 'bold' },
+  withdrawBtn: { backgroundColor: '#7C3AED', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 14, flex: 1, alignItems: 'center' },
   withdrawBtnDisabled: { backgroundColor: '#374151' },
-  withdrawBtnText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  withdrawBtnText: { color: 'white', fontSize: 15, fontWeight: 'bold' },
   sectionTitle: { color: '#9CA3AF', fontSize: 13, fontWeight: '600', marginBottom: 16 },
   empty: { alignItems: 'center', paddingVertical: 40 },
   emptyText: { color: '#6B7280', fontSize: 16, marginBottom: 8 },

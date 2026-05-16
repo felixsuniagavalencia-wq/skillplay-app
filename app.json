@@ -31,6 +31,9 @@
       "eas": {
         "projectId": "a41c6f7a-f72b-4c58-96bb-3ea15b4f1ef5"
       }
-    }
+    },
+    "plugins": [
+      "@stripe/stripe-react-native"
+    ]
   }
 }
