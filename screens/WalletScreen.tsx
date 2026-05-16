@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking, Alert } from 'react-native';
+import WithdrawScreen from './WithdrawScreen';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -12,6 +13,7 @@ export default function WalletScreen({ userId, onBack }: {
   const [kycStatus, setKycStatus] = useState('pending');
   const [loading, setLoading] = useState(true);
   const [kycLoading, setKycLoading] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -59,6 +61,19 @@ export default function WalletScreen({ userId, onBack }: {
     setKycLoading(false);
   };
 
+  if (showWithdraw) {
+    return (
+      <WithdrawScreen
+        userId={userId}
+        balance={balance}
+        onBack={() => {
+          setShowWithdraw(false);
+          fetchData();
+        }}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -77,7 +92,6 @@ export default function WalletScreen({ userId, onBack }: {
         <View style={{ width: 60 }} />
       </View>
 
-      {/* KYC Banner */}
       {kycStatus !== 'verified' && (
         <TouchableOpacity style={styles.kycBanner} onPress={handleKyc} disabled={kycLoading}>
           {kycLoading ? (
@@ -106,7 +120,9 @@ export default function WalletScreen({ userId, onBack }: {
         <Text style={styles.balance}>{balance.toFixed(2)} EUR</Text>
         <TouchableOpacity
           style={[styles.withdrawBtn, kycStatus !== 'verified' && styles.withdrawBtnDisabled]}
-          disabled={kycStatus !== 'verified'}>
+          disabled={kycStatus !== 'verified'}
+          onPress={() => setShowWithdraw(true)}
+        >
           <Text style={styles.withdrawBtnText}>
             {kycStatus !== 'verified' ? 'Verify ID to Withdraw' : 'Withdraw Funds'}
           </Text>
