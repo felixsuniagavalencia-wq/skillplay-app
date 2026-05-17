@@ -50,6 +50,7 @@ export default function App() {
           userId={userId}
           onStartGame={handleStartGame}
           onGoToWallet={() => setScreen('wallet')}
+          onTopUp={() => setScreen('topup')}
         />
       )}
       {screen === 'game' && (
