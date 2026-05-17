@@ -7,8 +7,9 @@ import GameScreen from './screens/GameScreen';
 import ResultScreen from './screens/ResultScreen';
 import WalletScreen from './screens/WalletScreen';
 import TopUpScreen from './screens/TopUpScreen';
+import ProfileScreen from './screens/ProfileScreen';
 
-type Screen = 'login' | 'home' | 'game' | 'result' | 'wallet' | 'topup';
+type Screen = 'login' | 'home' | 'game' | 'result' | 'wallet' | 'topup' | 'profile';
 
 const STRIPE_PUBLISHABLE_KEY = 'pk_test_51TA7OVEwynFK9hgR85ZBTk4fBQOcfx5YGQxBlH8fbF5bFfB4PvNW3ffRjadVljR6zhwup4Er70by72wyQxK0JGII00HdoyPxFU';
 
@@ -51,6 +52,7 @@ export default function App() {
           onStartGame={handleStartGame}
           onGoToWallet={() => setScreen('wallet')}
           onTopUp={() => setScreen('topup')}
+          onGoToProfile={() => setScreen('profile')}
         />
       )}
       {screen === 'game' && (
@@ -83,8 +85,16 @@ export default function App() {
           onBack={() => setScreen('wallet')}
           onSuccess={(newBalance) => {
             setBalance(newBalance);
-            setScreen('wallet');
+            setScreen('home');
           }}
+        />
+      )}
+      {screen === 'profile' && (
+        <ProfileScreen
+          userId={userId}
+          onBack={() => setScreen('home')}
+          onTopUp={() => setScreen('topup')}
+          onWithdraw={() => setScreen('wallet')}
         />
       )}
     </StripeProvider>

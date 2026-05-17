@@ -7,11 +7,12 @@ const CATEGORIES = ['Geografia', 'Ciencia', 'Historia', 'Deportes'];
 const DIFFICULTIES = ['basico', 'medio', 'avanzado', 'experto'];
 const ENTRY_FEES = [0.50, 1.00, 2.50, 5.00, 10.00];
 
-export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp }: {
+export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp, onGoToProfile }: {
   userId: string;
   onStartGame: (sessionId: string, questions: any[], difficulty: string) => void;
   onGoToWallet: () => void;
   onTopUp: () => void;
+  onGoToProfile: () => void;
 }) {
   const [balance, setBalance] = useState(0);
   const [category, setCategory] = useState('Geografia');
@@ -60,7 +61,6 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp 
 
   return (
     <>
-      {/* POPUP DE BIENVENIDA */}
       <Modal visible={showWelcome} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -90,13 +90,18 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp 
 
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>SkillPlay</Text>
+          <TouchableOpacity onPress={onGoToProfile}>
+            <Text style={styles.title}>🧠 SkillPlay</Text>
+          </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.addCreditsBtn} onPress={onTopUp}>
               <Text style={styles.addCreditsText}>+ Créditos</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.walletBtn} onPress={onGoToWallet}>
               <Text style={styles.walletText}>💰 {balance.toFixed(2)} EUR</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileBtn} onPress={onGoToProfile}>
+              <Text style={styles.profileBtnText}>👤</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -169,12 +174,14 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F0A1A', padding: 24 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#7C3AED' },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#7C3AED' },
   headerRight: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   addCreditsBtn: { backgroundColor: '#22C55E', padding: 10, borderRadius: 10 },
   addCreditsText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
   walletBtn: { backgroundColor: '#1F1535', padding: 10, borderRadius: 10 },
   walletText: { color: '#FBBF24', fontWeight: 'bold' },
+  profileBtn: { backgroundColor: '#1F1535', padding: 10, borderRadius: 10 },
+  profileBtnText: { fontSize: 18 },
   sectionTitle: { color: '#9CA3AF', fontSize: 13, fontWeight: '600', marginBottom: 12, marginTop: 20 },
   row: { marginBottom: 8 },
   chip: { backgroundColor: '#1F1535', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#374151' },
