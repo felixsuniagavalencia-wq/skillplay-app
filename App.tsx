@@ -1,3 +1,4 @@
+import './i18n';
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StripeProvider } from '@stripe/stripe-react-native';

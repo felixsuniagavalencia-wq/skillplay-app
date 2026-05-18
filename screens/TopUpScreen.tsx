@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { useStripe } from '@stripe/stripe-react-native';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -11,19 +12,19 @@ export default function TopUpScreen({ userId, onBack, onSuccess }: {
   onBack: () => void;
   onSuccess: (newBalance: number) => void;
 }) {
+  const { t } = useTranslation();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const handleTopUp = async () => {
     if (!selectedAmount) {
-      Alert.alert('Error', 'Selecciona un importe');
+      Alert.alert(t('error'), t('topup_btn_select'));
       return;
     }
 
     setLoading(true);
     try {
-      // 1. Crear Payment Intent en el backend
       const res = await fetch(API_URL + '/api/payments/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,12 +33,11 @@ export default function TopUpScreen({ userId, onBack, onSuccess }: {
       const data = await res.json();
 
       if (!data.clientSecret) {
-        Alert.alert('Error', data.error || 'Error creando pago');
+        Alert.alert(t('error'), data.error || t('error_connection'));
         setLoading(false);
         return;
       }
 
-      // 2. Inicializar Payment Sheet de Stripe
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'SkillPlay',
         paymentIntentClientSecret: data.clientSecret,
@@ -46,23 +46,21 @@ export default function TopUpScreen({ userId, onBack, onSuccess }: {
       });
 
       if (initError) {
-        Alert.alert('Error', initError.message);
+        Alert.alert(t('error'), initError.message);
         setLoading(false);
         return;
       }
 
-      // 3. Mostrar formulario de pago
       const { error: paymentError } = await presentPaymentSheet();
 
       if (paymentError) {
         if (paymentError.code !== 'Canceled') {
-          Alert.alert('Error', paymentError.message);
+          Alert.alert(t('error'), paymentError.message);
         }
         setLoading(false);
         return;
       }
 
-      // 4. Confirmar en el backend y acreditar saldo
       const confirmRes = await fetch(API_URL + '/api/payments/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,16 +73,16 @@ export default function TopUpScreen({ userId, onBack, onSuccess }: {
 
       if (confirmData.success) {
         Alert.alert(
-          '✅ Recarga exitosa',
-          `Se han añadido ${selectedAmount.toFixed(2)} EUR a tu wallet.`,
-          [{ text: 'OK', onPress: () => onSuccess(confirmData.newBalance) }]
+          t('topup_success_title'),
+          t('topup_success_msg', { amount: selectedAmount.toFixed(2) }),
+          [{ text: t('ok'), onPress: () => onSuccess(confirmData.newBalance) }]
         );
       } else {
-        Alert.alert('Error', confirmData.error || 'Error confirmando pago');
+        Alert.alert(t('error'), confirmData.error || t('error_connection'));
       }
 
     } catch (err) {
-      Alert.alert('Error', 'Error conectando al servidor');
+      Alert.alert(t('error'), t('error_connection'));
     }
     setLoading(false);
   };
@@ -93,13 +91,13 @@ export default function TopUpScreen({ userId, onBack, onSuccess }: {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.back}>← Back</Text>
+          <Text style={styles.back}>{t('back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Add Credits</Text>
+        <Text style={styles.title}>{t('topup_title')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
-      <Text style={styles.subtitle}>Select amount to add to your wallet</Text>
+      <Text style={styles.subtitle}>{t('topup_subtitle')}</Text>
 
       <View style={styles.amountsGrid}>
         {AMOUNTS.map((amount) => (
@@ -116,9 +114,9 @@ export default function TopUpScreen({ userId, onBack, onSuccess }: {
       </View>
 
       <View style={styles.infoBox}>
-        <Text style={styles.infoText}>💳 Pago seguro con Stripe</Text>
-        <Text style={styles.infoText}>⚡ Saldo disponible inmediatamente</Text>
-        <Text style={styles.infoText}>🔒 Datos bancarios nunca almacenados</Text>
+        <Text style={styles.infoText}>{t('topup_info1')}</Text>
+        <Text style={styles.infoText}>{t('topup_info2')}</Text>
+        <Text style={styles.infoText}>{t('topup_info3')}</Text>
       </View>
 
       <TouchableOpacity
@@ -130,7 +128,7 @@ export default function TopUpScreen({ userId, onBack, onSuccess }: {
           <ActivityIndicator color="white" />
         ) : (
           <Text style={styles.btnText}>
-            {selectedAmount ? `Add ${selectedAmount} EUR` : 'Select an amount'}
+            {selectedAmount ? t('topup_btn', { amount: selectedAmount.toFixed(2) }) : t('topup_btn_select')}
           </Text>
         )}
       </TouchableOpacity>

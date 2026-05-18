@@ -13,9 +13,12 @@
     "@stripe/stripe-react-native": "0.50.3",
     "axios": "^1.16.1",
     "expo": "~54.0.33",
+    "expo-localization": "~17.0.8",
     "expo-status-bar": "~3.0.9",
+    "i18next": "^26.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-i18next": "^17.0.8",
     "react-native": "0.81.5",
     "react-native-web": "^0.21.0",
     "zustand": "^5.0.13"

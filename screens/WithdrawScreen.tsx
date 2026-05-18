@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -8,6 +9,7 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
   balance: number;
   onBack: () => void;
 }) {
+  const { t } = useTranslation();
   const [accountHolder, setAccountHolder] = useState('');
   const [iban, setIban] = useState('');
   const [bic, setBic] = useState('');
@@ -28,41 +30,41 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
 
   const handleWithdraw = async () => {
     if (!accountHolder.trim()) {
-      Alert.alert('Error', 'Ingresa el nombre del titular de la cuenta');
+      Alert.alert(t('error'), t('withdraw_holder_name'));
       return;
     }
     if (!validateIban(iban)) {
-      Alert.alert('Error', 'Ingresa un IBAN válido (15-34 caracteres)');
+      Alert.alert(t('error'), 'Ingresa un IBAN válido (15-34 caracteres)');
       return;
     }
     if (!validateBic(bic)) {
-      Alert.alert('Error', 'Ingresa un BIC/SWIFT válido (8-11 caracteres)');
+      Alert.alert(t('error'), 'Ingresa un BIC/SWIFT válido (8-11 caracteres)');
       return;
     }
     if (!bankName.trim()) {
-      Alert.alert('Error', 'Ingresa el nombre del banco');
+      Alert.alert(t('error'), t('withdraw_bank_name'));
       return;
     }
     if (!bankCountry.trim()) {
-      Alert.alert('Error', 'Ingresa el país del banco');
+      Alert.alert(t('error'), t('withdraw_bank_country'));
       return;
     }
     const amountNum = parseFloat(amount);
     if (!amount || isNaN(amountNum) || amountNum < 5) {
-      Alert.alert('Error', 'El importe mínimo de retiro es 5.00 EUR');
+      Alert.alert(t('error'), t('withdraw_info4'));
       return;
     }
     if (amountNum > balance) {
-      Alert.alert('Error', 'El importe supera tu saldo disponible');
+      Alert.alert(t('error'), 'El importe supera tu saldo disponible');
       return;
     }
 
     Alert.alert(
-      'Confirmar retiro',
-      `¿Confirmas el retiro de ${amountNum.toFixed(2)} EUR?\n\nTitular: ${accountHolder}\nIBAN: ${iban.replace(/\s/g, '').toUpperCase()}\nBIC: ${bic.replace(/\s/g, '').toUpperCase()}\nBanco: ${bankName}\nPaís: ${bankCountry}`,
+      t('withdraw_confirm_title'),
+      `${amountNum.toFixed(2)} EUR\n\n${accountHolder}\nIBAN: ${iban.replace(/\s/g, '').toUpperCase()}\nBIC: ${bic.replace(/\s/g, '').toUpperCase()}\n${bankName} — ${bankCountry}`,
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Confirmar', onPress: () => submitWithdraw(amountNum) }
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('confirm'), onPress: () => submitWithdraw(amountNum) }
       ]
     );
   };
@@ -86,15 +88,15 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
       const data = await res.json();
       if (data.success) {
         Alert.alert(
-          '✅ Retiro solicitado',
-          `Tu retiro de ${amountNum.toFixed(2)} EUR ha sido registrado.\n\nSerá procesado en 24-48 horas hábiles.\n\nReferencia: ${data.reference || 'SP-' + Date.now()}`,
-          [{ text: 'OK', onPress: onBack }]
+          t('withdraw_success_title'),
+          t('withdraw_success_msg', { amount: amountNum.toFixed(2), reference: data.reference || 'SP-' + Date.now() }),
+          [{ text: t('ok'), onPress: onBack }]
         );
       } else {
-        Alert.alert('Error', data.error || 'No se pudo procesar el retiro');
+        Alert.alert(t('error'), data.error || t('error_connection'));
       }
     } catch (err) {
-      Alert.alert('Error', 'Error conectando al servidor');
+      Alert.alert(t('error'), t('error_connection'));
     }
     setLoading(false);
   };
@@ -103,106 +105,50 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.back}>← Back</Text>
+          <Text style={styles.back}>{t('back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Withdraw Funds</Text>
+        <Text style={styles.title}>{t('withdraw_title')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
       <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Available Balance</Text>
+        <Text style={styles.balanceLabel}>{t('withdraw_balance')}</Text>
         <Text style={styles.balance}>{balance.toFixed(2)} EUR</Text>
       </View>
 
       <View style={styles.form}>
+        <Text style={styles.sectionHeader}>👤 {t('withdraw_holder')}</Text>
+        <Text style={styles.label}>{t('withdraw_holder_name')}</Text>
+        <TextInput style={styles.input} placeholder={t('withdraw_holder_placeholder')} placeholderTextColor="#6B7280" value={accountHolder} onChangeText={setAccountHolder} autoCapitalize="words" />
 
-        <Text style={styles.sectionHeader}>👤 Datos del Titular</Text>
+        <Text style={styles.sectionHeader}>{t('withdraw_bank_data')}</Text>
+        <Text style={styles.label}>{t('withdraw_iban')}</Text>
+        <TextInput style={styles.input} placeholder="ES12 3456 7890 1234 5678 9012" placeholderTextColor="#6B7280" value={iban} onChangeText={setIban} autoCapitalize="characters" autoCorrect={false} />
+        <Text style={styles.hint}>{t('withdraw_iban_hint')}</Text>
 
-        <Text style={styles.label}>Nombre completo del titular</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre como aparece en la cuenta bancaria"
-          placeholderTextColor="#6B7280"
-          value={accountHolder}
-          onChangeText={setAccountHolder}
-          autoCapitalize="words"
-        />
+        <Text style={styles.label}>{t('withdraw_bic')}</Text>
+        <TextInput style={styles.input} placeholder="XXXXXXXX o XXXXXXXXXXX" placeholderTextColor="#6B7280" value={bic} onChangeText={setBic} autoCapitalize="characters" autoCorrect={false} />
+        <Text style={styles.hint}>{t('withdraw_bic_hint')}</Text>
 
-        <Text style={styles.sectionHeader}>🏦 Datos Bancarios</Text>
+        <Text style={styles.label}>{t('withdraw_bank_name')}</Text>
+        <TextInput style={styles.input} placeholder="Ej: Santander, BBVA, Deutsche Bank" placeholderTextColor="#6B7280" value={bankName} onChangeText={setBankName} autoCapitalize="words" />
 
-        <Text style={styles.label}>IBAN</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="ES12 3456 7890 1234 5678 9012"
-          placeholderTextColor="#6B7280"
-          value={iban}
-          onChangeText={setIban}
-          autoCapitalize="characters"
-          autoCorrect={false}
-        />
-        <Text style={styles.hint}>International Bank Account Number</Text>
+        <Text style={styles.label}>{t('withdraw_bank_country')}</Text>
+        <TextInput style={styles.input} placeholder="Ej: España, Venezuela, USA" placeholderTextColor="#6B7280" value={bankCountry} onChangeText={setBankCountry} autoCapitalize="words" />
 
-        <Text style={styles.label}>BIC / SWIFT</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="XXXXXXXX o XXXXXXXXXXX"
-          placeholderTextColor="#6B7280"
-          value={bic}
-          onChangeText={setBic}
-          autoCapitalize="characters"
-          autoCorrect={false}
-        />
-        <Text style={styles.hint}>Bank Identifier Code (8 u 11 caracteres)</Text>
-
-        <Text style={styles.label}>Nombre del banco</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej: Banco Santander, BBVA, Deutsche Bank"
-          placeholderTextColor="#6B7280"
-          value={bankName}
-          onChangeText={setBankName}
-          autoCapitalize="words"
-        />
-
-        <Text style={styles.label}>País del banco</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej: España, Venezuela, México, USA"
-          placeholderTextColor="#6B7280"
-          value={bankCountry}
-          onChangeText={setBankCountry}
-          autoCapitalize="words"
-        />
-
-        <Text style={styles.sectionHeader}>💶 Importe</Text>
-
-        <Text style={styles.label}>Cantidad a retirar (EUR)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Mínimo 5.00 EUR"
-          placeholderTextColor="#6B7280"
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="decimal-pad"
-        />
+        <Text style={styles.sectionHeader}>{t('withdraw_amount_section')}</Text>
+        <Text style={styles.label}>{t('withdraw_amount')}</Text>
+        <TextInput style={styles.input} placeholder={t('withdraw_amount_placeholder')} placeholderTextColor="#6B7280" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoText}>⏱ Procesamiento: 24-48 horas hábiles</Text>
-          <Text style={styles.infoText}>🌍 Transferencia internacional SWIFT/SEPA</Text>
-          <Text style={styles.infoText}>📋 Verificación KYC requerida</Text>
-          <Text style={styles.infoText}>💶 Importe mínimo: 5.00 EUR</Text>
+          <Text style={styles.infoText}>{t('withdraw_info1')}</Text>
+          <Text style={styles.infoText}>{t('withdraw_info2')}</Text>
+          <Text style={styles.infoText}>{t('withdraw_info3')}</Text>
+          <Text style={styles.infoText}>{t('withdraw_info4')}</Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.btn, loading && styles.btnDisabled]}
-          onPress={handleWithdraw}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.btnText}>Solicitar Retiro</Text>
-          )}
+        <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={handleWithdraw} disabled={loading}>
+          {loading ? <ActivityIndicator color="white" /> : <Text style={styles.btnText}>{t('withdraw_btn')}</Text>}
         </TouchableOpacity>
       </View>
     </ScrollView>

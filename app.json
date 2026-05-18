@@ -39,7 +39,8 @@
           "merchantIdentifier": "merchant.com.skillplay",
           "enableGooglePay": false
         }
-      ]
+      ],
+      "expo-localization"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import WithdrawScreen from './WithdrawScreen';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
@@ -9,6 +10,7 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
   onBack: () => void;
   onTopUp: () => void;
 }) {
+  const { t } = useTranslation();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [kycStatus, setKycStatus] = useState('pending');
@@ -44,20 +46,16 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
       const res = await fetch(API_URL + '/api/kyc/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          firstName: 'User',
-          lastName: userId
-        })
+        body: JSON.stringify({ userId, firstName: 'User', lastName: userId })
       });
       const data = await res.json();
       if (data.sessionUrl) {
         await Linking.openURL(data.sessionUrl);
       } else {
-        Alert.alert('Error', 'No se pudo iniciar la verificación');
+        Alert.alert(t('error'), 'No se pudo iniciar la verificación');
       }
     } catch (err) {
-      Alert.alert('Error', 'Error conectando al servidor');
+      Alert.alert(t('error'), t('error_connection'));
     }
     setKycLoading(false);
   };
@@ -67,10 +65,7 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
       <WithdrawScreen
         userId={userId}
         balance={balance}
-        onBack={() => {
-          setShowWithdraw(false);
-          fetchData();
-        }}
+        onBack={() => { setShowWithdraw(false); fetchData(); }}
       />
     );
   }
@@ -84,19 +79,18 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
   }
 
   const getTxColor = (type: string) => {
-    if (type === 'prize') return '#FBBF24';      // Dorado — ganancia
-    if (type === 'deposit') return '#22C55E';    // Verde — ingreso
-    if (type === 'withdrawal') return '#EF4444'; // Rojo — salida
-    if (type === 'entry_fee') return '#EF4444';  // Rojo — gasto
+    if (type === 'prize') return '#FBBF24';
+    if (type === 'deposit') return '#22C55E';
+    if (type === 'withdrawal' || type === 'entry_fee') return '#EF4444';
     return '#9CA3AF';
   };
 
   const getTxIcon = (type: string) => {
-    if (type === 'prize') return '🏆 Premio';
-    if (type === 'deposit') return '💳 Depósito';
-    if (type === 'withdrawal') return '🏦 Retiro';
-    if (type === 'entry_fee') return '🎮 Entry Fee';
-    return '📋 Transacción';
+    if (type === 'prize') return t('wallet_prize');
+    if (type === 'deposit') return t('wallet_deposit');
+    if (type === 'withdrawal') return t('wallet_withdrawal');
+    if (type === 'entry_fee') return t('wallet_entry_fee');
+    return t('wallet_transaction');
   };
 
   const getTxSign = (type: string) => {
@@ -108,13 +102,12 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.back}>← Back</Text>
+          <Text style={styles.back}>{t('back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>My Wallet</Text>
+        <Text style={styles.title}>{t('wallet_title')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
-      {/* KYC Banner */}
       {kycStatus !== 'verified' && (
         <TouchableOpacity style={styles.kycBanner} onPress={handleKyc} disabled={kycLoading}>
           {kycLoading ? (
@@ -123,8 +116,8 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
             <>
               <Text style={styles.kycIcon}>🪪</Text>
               <View style={styles.kycText}>
-                <Text style={styles.kycTitle}>Verify your identity</Text>
-                <Text style={styles.kycSubtitle}>Required to withdraw funds</Text>
+                <Text style={styles.kycTitle}>{t('wallet_kyc_title')}</Text>
+                <Text style={styles.kycSubtitle}>{t('wallet_kyc_subtitle')}</Text>
               </View>
               <Text style={styles.kycArrow}>→</Text>
             </>
@@ -132,41 +125,37 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
         </TouchableOpacity>
       )}
 
-      {/* KYC Verified — morado */}
       {kycStatus === 'verified' && (
         <View style={styles.kycVerified}>
-          <Text style={styles.kycVerifiedText}>✅ Identity Verified</Text>
+          <Text style={styles.kycVerifiedText}>{t('wallet_kyc_verified')}</Text>
         </View>
       )}
 
-      {/* Balance Card */}
       <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Available Balance</Text>
+        <Text style={styles.balanceLabel}>{t('wallet_balance')}</Text>
         <Text style={styles.balance}>{balance.toFixed(2)} EUR</Text>
         <View style={styles.btnRow}>
-          {/* Verde — ingreso */}
           <TouchableOpacity style={styles.topUpBtn} onPress={onTopUp}>
-            <Text style={styles.topUpBtnText}>+ Add Credits</Text>
+            <Text style={styles.topUpBtnText}>{t('wallet_add_credits')}</Text>
           </TouchableOpacity>
-          {/* Rojo — salida */}
           <TouchableOpacity
             style={[styles.withdrawBtn, kycStatus !== 'verified' && styles.withdrawBtnDisabled]}
             disabled={kycStatus !== 'verified'}
             onPress={() => setShowWithdraw(true)}
           >
             <Text style={styles.withdrawBtnText}>
-              {kycStatus !== 'verified' ? '🔒 Withdraw' : '🏦 Withdraw'}
+              {kycStatus !== 'verified' ? t('wallet_withdraw_locked') : t('wallet_withdraw')}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Transaction History</Text>
+      <Text style={styles.sectionTitle}>{t('wallet_history')}</Text>
 
       {transactions.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No transactions yet.</Text>
-          <Text style={styles.emptySubtext}>Play a challenge to earn your first reward!</Text>
+          <Text style={styles.emptyText}>{t('wallet_no_transactions')}</Text>
+          <Text style={styles.emptySubtext}>{t('wallet_play_to_earn')}</Text>
         </View>
       ) : (
         transactions.map((tx, i) => (

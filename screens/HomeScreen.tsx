@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Image } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -14,6 +15,7 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
   onTopUp: () => void;
   onGoToProfile: () => void;
 }) {
+  const { t } = useTranslation();
   const [balance, setBalance] = useState(0);
   const [category, setCategory] = useState('Geografia');
   const [difficulty, setDifficulty] = useState('basico');
@@ -36,7 +38,7 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
 
   const handleStartGame = async () => {
     if (balance < entryFee) {
-      setError(`Saldo insuficiente. Necesitas ${entryFee.toFixed(2)} EUR. Recarga tu wallet.`);
+      setError(t('home_insufficient', { amount: entryFee.toFixed(2) }));
       return;
     }
     setLoading(true);
@@ -51,10 +53,10 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
       if (data.sessionId) {
         onStartGame(data.sessionId, data.questions, difficulty);
       } else {
-        setError('Error generating questions. Try again.');
+        setError(t('error_connection'));
       }
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError(t('error_connection'));
     }
     setLoading(false);
   };
@@ -64,102 +66,76 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
       <Modal visible={showWelcome} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            {/* Logo real en lugar de emoji */}
-            <Image
-              source={require('../assets/icon.png')}
-              style={styles.modalLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.modalTitle}>Juega con{'\n'}Dinero Real</Text>
-            <Text style={styles.modalSubtitle}>Demuestra tus conocimientos y gana premios reales en cada reto</Text>
+            <Image source={require('../assets/icon.png')} style={styles.modalLogo} resizeMode="contain" />
+            <Text style={styles.modalTitle}>{t('welcome_title')}</Text>
+            <Text style={styles.modalSubtitle}>{t('welcome_subtitle')}</Text>
             <View style={styles.modalFeatures}>
-              <Text style={styles.modalFeature}>🏆 Gana dinero real</Text>
-              <Text style={styles.modalFeature}>⚡ Premios instantáneos</Text>
-              <Text style={styles.modalFeature}>🔒 100% seguro y verificado</Text>
+              <Text style={styles.modalFeature}>{t('welcome_feature1')}</Text>
+              <Text style={styles.modalFeature}>{t('welcome_feature2')}</Text>
+              <Text style={styles.modalFeature}>{t('welcome_feature3')}</Text>
             </View>
-            <TouchableOpacity
-              style={styles.modalBtnPrimary}
-              onPress={() => { setShowWelcome(false); onTopUp(); }}
-            >
-              <Text style={styles.modalBtnPrimaryText}>💳 Añadir Créditos y Jugar</Text>
+            <TouchableOpacity style={styles.modalBtnPrimary} onPress={() => { setShowWelcome(false); onTopUp(); }}>
+              <Text style={styles.modalBtnPrimaryText}>{t('welcome_btn_primary')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalBtnSecondary}
-              onPress={() => setShowWelcome(false)}
-            >
-              <Text style={styles.modalBtnSecondaryText}>Ya tengo créditos</Text>
+            <TouchableOpacity style={styles.modalBtnSecondary} onPress={() => setShowWelcome(false)}>
+              <Text style={styles.modalBtnSecondaryText}>{t('welcome_btn_secondary')}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
       <ScrollView style={styles.container}>
-        {/* HEADER - Fila 1: Logo + Perfil */}
         <View style={styles.headerRow1}>
           <TouchableOpacity style={styles.logoRow} onPress={onGoToProfile}>
-            <Image
-              source={require('../assets/icon.png')}
-              style={styles.logoImg}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>SkillPlay</Text>
+            <Image source={require('../assets/icon.png')} style={styles.logoImg} resizeMode="contain" />
+            <Text style={styles.title}>{t('home_title')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.profileBtn} onPress={onGoToProfile}>
-            <Text style={styles.profileBtnText}>👤 Perfil</Text>
+            <Text style={styles.profileBtnText}>{t('home_profile')}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* HEADER - Fila 2: Saldo + Créditos */}
         <View style={styles.headerRow2}>
           <TouchableOpacity style={styles.walletBtn} onPress={onGoToWallet}>
             <Text style={styles.walletText}>💰 <Text style={styles.balanceGlow}>{balance.toFixed(2)} EUR</Text></Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.addCreditsBtn} onPress={onTopUp}>
-            <Text style={styles.addCreditsText}>+ Añadir Créditos</Text>
+            <Text style={styles.addCreditsText}>{t('home_add_credits')}</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionTitle}>Category</Text>
+        <Text style={styles.sectionTitle}>{t('home_category')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
           {CATEGORIES.map(cat => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.chip, category === cat && styles.chipActive]}
-              onPress={() => setCategory(cat)}>
+            <TouchableOpacity key={cat} style={[styles.chip, category === cat && styles.chipActive]} onPress={() => setCategory(cat)}>
               <Text style={[styles.chipText, category === cat && styles.chipTextActive]}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        <Text style={styles.sectionTitle}>Difficulty</Text>
+        <Text style={styles.sectionTitle}>{t('home_difficulty')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
           {DIFFICULTIES.map(diff => (
-            <TouchableOpacity
-              key={diff}
-              style={[styles.chip, difficulty === diff && styles.chipActive]}
-              onPress={() => setDifficulty(diff)}>
+            <TouchableOpacity key={diff} style={[styles.chip, difficulty === diff && styles.chipActive]} onPress={() => setDifficulty(diff)}>
               <Text style={[styles.chipText, difficulty === diff && styles.chipTextActive]}>{diff}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        <Text style={styles.sectionTitle}>Entry Fee</Text>
+        <Text style={styles.sectionTitle}>{t('home_entry_fee')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
           {ENTRY_FEES.map(fee => (
-            <TouchableOpacity
-              key={fee}
-              style={[styles.chip, entryFee === fee && styles.chipActive]}
-              onPress={() => setEntryFee(fee)}>
+            <TouchableOpacity key={fee} style={[styles.chip, entryFee === fee && styles.chipActive]} onPress={() => setEntryFee(fee)}>
               <Text style={[styles.chipText, entryFee === fee && styles.chipTextActive]}>{fee.toFixed(2)} EUR</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
         <View style={styles.balanceInfo}>
-          <Text style={styles.balanceInfoText}>Tu saldo: <Text style={styles.balanceInfoAmount}>{balance.toFixed(2)} EUR</Text></Text>
+          <Text style={styles.balanceInfoText}>{t('home_balance')}: <Text style={styles.balanceInfoAmount}>{balance.toFixed(2)} EUR</Text></Text>
           {balance < entryFee && (
             <TouchableOpacity onPress={onTopUp}>
-              <Text style={styles.addCreditsLink}>+ Añadir créditos</Text>
+              <Text style={styles.addCreditsLink}>{t('home_add_credits')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -175,7 +151,7 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
             <ActivityIndicator color="white" />
           ) : (
             <Text style={styles.startBtnText}>
-              {balance < entryFee ? '+ Añadir créditos para jugar' : 'Start Challenge'}
+              {balance < entryFee ? t('home_add_credits_to_play') : t('home_start')}
             </Text>
           )}
         </TouchableOpacity>

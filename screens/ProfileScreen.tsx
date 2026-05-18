@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -9,6 +10,7 @@ export default function ProfileScreen({ userId, onBack, onTopUp, onWithdraw }: {
   onTopUp: () => void;
   onWithdraw: () => void;
 }) {
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +46,12 @@ export default function ProfileScreen({ userId, onBack, onTopUp, onWithdraw }: {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.back}>← Back</Text>
+          <Text style={styles.back}>{t('back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>My Profile</Text>
+        <Text style={styles.title}>{t('profile_title')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
-      {/* Avatar y nombre */}
       <View style={styles.avatarSection}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
@@ -59,65 +60,58 @@ export default function ProfileScreen({ userId, onBack, onTopUp, onWithdraw }: {
         </View>
         <Text style={styles.username}>{profile?.username || userId}</Text>
         <Text style={styles.email}>{profile?.email || ''}</Text>
-
-        {/* KYC Badge — morado si verified */}
         <View style={[styles.kycBadge, kycVerified && styles.kycBadgeVerified]}>
           <Text style={[styles.kycBadgeText, kycVerified && styles.kycBadgeTextVerified]}>
-            {kycVerified ? '✅ Verified' : '⚠️ Not Verified'}
+            {kycVerified ? t('profile_verified') : t('profile_not_verified')}
           </Text>
         </View>
       </View>
 
-      {/* Stats */}
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
           <Text style={styles.statValueGold}>{(profile?.balance || 0).toFixed(2)} €</Text>
-          <Text style={styles.statLabel}>Balance</Text>
+          <Text style={styles.statLabel}>{t('profile_balance')}</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValueWhite}>{profile?.gamesPlayed || 0}</Text>
-          <Text style={styles.statLabel}>Games Played</Text>
+          <Text style={styles.statLabel}>{t('profile_games')}</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValueGold}>{(profile?.totalEarned || 0).toFixed(2)} €</Text>
-          <Text style={styles.statLabel}>Total Earned</Text>
+          <Text style={styles.statLabel}>{t('profile_earned')}</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValueRed}>{(profile?.totalWithdrawn || 0).toFixed(2)} €</Text>
-          <Text style={styles.statLabel}>Withdrawn</Text>
+          <Text style={styles.statLabel}>{t('profile_withdrawn')}</Text>
         </View>
       </View>
 
-      {/* Nivel de cuenta */}
       <View style={styles.levelCard}>
-        <Text style={styles.levelLabel}>Account Level</Text>
+        <Text style={styles.levelLabel}>{t('profile_level')}</Text>
         <Text style={styles.levelValue}>
           {profile?.accountLevel === 'premium' ? '👑 Premium' :
            profile?.accountLevel === 'advanced' ? '⭐ Advanced' :
            profile?.accountLevel === 'basic' ? '✅ Basic' : '🆕 New'}
         </Text>
-        <Text style={styles.levelLimit}>Daily limit: {profile?.dailyLimit || 50} EUR</Text>
+        <Text style={styles.levelLimit}>{t('profile_daily_limit', { limit: profile?.dailyLimit || 50 })}</Text>
       </View>
 
-      {/* Acciones */}
       <View style={styles.actions}>
-        {/* Verde — ingreso */}
         <TouchableOpacity style={styles.addCreditsBtn} onPress={onTopUp}>
-          <Text style={styles.actionBtnText}>💳 Add Credits</Text>
+          <Text style={styles.actionBtnText}>{t('profile_add_credits')}</Text>
         </TouchableOpacity>
-        {/* Rojo — salida */}
         <TouchableOpacity
           style={[styles.withdrawBtn, !kycVerified && styles.actionBtnDisabled]}
           onPress={onWithdraw}
           disabled={!kycVerified}
         >
-          <Text style={styles.actionBtnText}>🏦 Withdraw Funds</Text>
+          <Text style={styles.actionBtnText}>{t('profile_withdraw')}</Text>
         </TouchableOpacity>
       </View>
 
       {!kycVerified && (
         <View style={styles.kycWarning}>
-          <Text style={styles.kycWarningText}>⚠️ Complete identity verification to withdraw funds</Text>
+          <Text style={styles.kycWarningText}>{t('profile_kyc_warning')}</Text>
         </View>
       )}
     </ScrollView>
