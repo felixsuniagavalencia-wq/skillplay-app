@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -59,8 +59,10 @@ export default function ProfileScreen({ userId, onBack, onTopUp, onWithdraw }: {
         </View>
         <Text style={styles.username}>{profile?.username || userId}</Text>
         <Text style={styles.email}>{profile?.email || ''}</Text>
-        <View style={styles.kycBadge}>
-          <Text style={styles.kycBadgeText}>
+
+        {/* KYC Badge — morado si verified */}
+        <View style={[styles.kycBadge, kycVerified && styles.kycBadgeVerified]}>
+          <Text style={[styles.kycBadgeText, kycVerified && styles.kycBadgeTextVerified]}>
             {kycVerified ? '✅ Verified' : '⚠️ Not Verified'}
           </Text>
         </View>
@@ -69,19 +71,19 @@ export default function ProfileScreen({ userId, onBack, onTopUp, onWithdraw }: {
       {/* Stats */}
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{(profile?.balance || 0).toFixed(2)} €</Text>
+          <Text style={styles.statValueGold}>{(profile?.balance || 0).toFixed(2)} €</Text>
           <Text style={styles.statLabel}>Balance</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{profile?.gamesPlayed || 0}</Text>
+          <Text style={styles.statValueWhite}>{profile?.gamesPlayed || 0}</Text>
           <Text style={styles.statLabel}>Games Played</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{(profile?.totalEarned || 0).toFixed(2)} €</Text>
+          <Text style={styles.statValueGold}>{(profile?.totalEarned || 0).toFixed(2)} €</Text>
           <Text style={styles.statLabel}>Total Earned</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{(profile?.totalWithdrawn || 0).toFixed(2)} €</Text>
+          <Text style={styles.statValueRed}>{(profile?.totalWithdrawn || 0).toFixed(2)} €</Text>
           <Text style={styles.statLabel}>Withdrawn</Text>
         </View>
       </View>
@@ -99,11 +101,13 @@ export default function ProfileScreen({ userId, onBack, onTopUp, onWithdraw }: {
 
       {/* Acciones */}
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionBtn} onPress={onTopUp}>
+        {/* Verde — ingreso */}
+        <TouchableOpacity style={styles.addCreditsBtn} onPress={onTopUp}>
           <Text style={styles.actionBtnText}>💳 Add Credits</Text>
         </TouchableOpacity>
+        {/* Rojo — salida */}
         <TouchableOpacity
-          style={[styles.actionBtn, styles.actionBtnSecondary, !kycVerified && styles.actionBtnDisabled]}
+          style={[styles.withdrawBtn, !kycVerified && styles.actionBtnDisabled]}
           onPress={onWithdraw}
           disabled={!kycVerified}
         >
@@ -131,20 +135,24 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 36, fontWeight: 'bold', color: 'white' },
   username: { fontSize: 24, fontWeight: 'bold', color: 'white', marginBottom: 4 },
   email: { fontSize: 14, color: '#6B7280', marginBottom: 12 },
-  kycBadge: { backgroundColor: '#1F1535', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6 },
+  kycBadge: { backgroundColor: '#1F1535', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1, borderColor: '#374151' },
+  kycBadgeVerified: { backgroundColor: '#2D1B69', borderColor: '#7C3AED' },
   kycBadgeText: { color: '#9CA3AF', fontWeight: '600', fontSize: 13 },
+  kycBadgeTextVerified: { color: '#7C3AED' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   statCard: { backgroundColor: '#1F1535', borderRadius: 16, padding: 20, flex: 1, minWidth: '45%', alignItems: 'center' },
-  statValue: { fontSize: 24, fontWeight: 'bold', color: '#FBBF24', marginBottom: 4 },
+  statValueGold: { fontSize: 24, fontWeight: 'bold', color: '#FBBF24', marginBottom: 4, textShadowColor: '#FBBF24', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 6 },
+  statValueWhite: { fontSize: 24, fontWeight: 'bold', color: 'white', marginBottom: 4 },
+  statValueRed: { fontSize: 24, fontWeight: 'bold', color: '#EF4444', marginBottom: 4 },
   statLabel: { color: '#6B7280', fontSize: 13 },
   levelCard: { backgroundColor: '#1F1535', borderRadius: 16, padding: 20, marginBottom: 24, alignItems: 'center' },
   levelLabel: { color: '#6B7280', fontSize: 13, marginBottom: 8 },
   levelValue: { fontSize: 20, fontWeight: 'bold', color: 'white', marginBottom: 4 },
   levelLimit: { color: '#9CA3AF', fontSize: 13 },
   actions: { gap: 12, marginBottom: 16 },
-  actionBtn: { backgroundColor: '#7C3AED', borderRadius: 12, padding: 16, alignItems: 'center' },
-  actionBtnSecondary: { backgroundColor: '#1F1535', borderWidth: 1, borderColor: '#7C3AED' },
-  actionBtnDisabled: { borderColor: '#374151', opacity: 0.5 },
+  addCreditsBtn: { backgroundColor: '#22C55E', borderRadius: 12, padding: 16, alignItems: 'center' },
+  withdrawBtn: { backgroundColor: '#EF4444', borderRadius: 12, padding: 16, alignItems: 'center' },
+  actionBtnDisabled: { opacity: 0.4 },
   actionBtnText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   kycWarning: { backgroundColor: '#1c1107', borderRadius: 12, padding: 14, marginBottom: 40 },
   kycWarningText: { color: '#FCD34D', fontSize: 13, textAlign: 'center' }

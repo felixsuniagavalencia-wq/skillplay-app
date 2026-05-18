@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Image } from 'react-native';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -64,7 +64,12 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
       <Modal visible={showWelcome} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalEmoji}>🧠</Text>
+            {/* Logo real en lugar de emoji */}
+            <Image
+              source={require('../assets/icon.png')}
+              style={styles.modalLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.modalTitle}>Juega con{'\n'}Dinero Real</Text>
             <Text style={styles.modalSubtitle}>Demuestra tus conocimientos y gana premios reales en cada reto</Text>
             <View style={styles.modalFeatures}>
@@ -91,7 +96,14 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
       <ScrollView style={styles.container}>
         {/* HEADER - Fila 1: Logo + Perfil */}
         <View style={styles.headerRow1}>
-          <Text style={styles.title}>🧠 SkillPlay</Text>
+          <TouchableOpacity style={styles.logoRow} onPress={onGoToProfile}>
+            <Image
+              source={require('../assets/icon.png')}
+              style={styles.logoImg}
+              resizeMode="contain"
+            />
+            <Text style={styles.title}>SkillPlay</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.profileBtn} onPress={onGoToProfile}>
             <Text style={styles.profileBtnText}>👤 Perfil</Text>
           </TouchableOpacity>
@@ -100,7 +112,7 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
         {/* HEADER - Fila 2: Saldo + Créditos */}
         <View style={styles.headerRow2}>
           <TouchableOpacity style={styles.walletBtn} onPress={onGoToWallet}>
-            <Text style={styles.walletText}>💰 {balance.toFixed(2)} EUR</Text>
+            <Text style={styles.walletText}>💰 <Text style={styles.balanceGlow}>{balance.toFixed(2)} EUR</Text></Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.addCreditsBtn} onPress={onTopUp}>
             <Text style={styles.addCreditsText}>+ Añadir Créditos</Text>
@@ -176,11 +188,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F0A1A', padding: 24 },
   headerRow1: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 12 },
   headerRow2: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 8 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logoImg: { width: 36, height: 36, borderRadius: 8 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#7C3AED' },
-  profileBtn: { backgroundColor: '#1F1535', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  profileBtn: { backgroundColor: '#1F1535', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10 },
   profileBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
   walletBtn: { backgroundColor: '#1F1535', padding: 10, borderRadius: 10, flex: 1 },
-  walletText: { color: '#FBBF24', fontWeight: 'bold', textAlign: 'center' },
+  walletText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
+  balanceGlow: { color: '#FBBF24', fontWeight: 'bold', textShadowColor: '#FBBF24', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 8 },
   addCreditsBtn: { backgroundColor: '#22C55E', padding: 10, borderRadius: 10, flex: 1 },
   addCreditsText: { color: 'white', fontWeight: 'bold', fontSize: 13, textAlign: 'center' },
   sectionTitle: { color: '#9CA3AF', fontSize: 13, fontWeight: '600', marginBottom: 12, marginTop: 20 },
@@ -191,15 +206,15 @@ const styles = StyleSheet.create({
   chipTextActive: { color: 'white' },
   balanceInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1F1535', borderRadius: 12, padding: 14, marginTop: 20 },
   balanceInfoText: { color: '#9CA3AF', fontSize: 14 },
-  balanceInfoAmount: { color: '#FBBF24', fontWeight: 'bold' },
+  balanceInfoAmount: { color: '#FBBF24', fontWeight: 'bold', textShadowColor: '#FBBF24', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 6 },
   addCreditsLink: { color: '#22C55E', fontWeight: 'bold', fontSize: 14 },
   error: { color: '#EF4444', textAlign: 'center', marginTop: 16 },
   startBtn: { backgroundColor: '#7C3AED', borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 32, marginBottom: 40 },
-  startBtnDisabled: { backgroundColor: '#FF6B35' },
+  startBtnDisabled: { backgroundColor: '#4C1D95', opacity: 0.6 },
   startBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   modalBox: { backgroundColor: '#1F1535', borderRadius: 24, padding: 32, width: '100%', alignItems: 'center' },
-  modalEmoji: { fontSize: 64, marginBottom: 16 },
+  modalLogo: { width: 100, height: 100, marginBottom: 16, borderRadius: 20 },
   modalTitle: { fontSize: 32, fontWeight: 'bold', color: 'white', textAlign: 'center', marginBottom: 12, lineHeight: 38 },
   modalSubtitle: { color: '#9CA3AF', fontSize: 16, textAlign: 'center', marginBottom: 24, lineHeight: 24 },
   modalFeatures: { width: '100%', marginBottom: 28, gap: 12 },

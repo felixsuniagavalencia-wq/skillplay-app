@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 
 const API_URL = 'https://skillplay-production.up.railway.app';
 
@@ -27,7 +27,6 @@ export default function LoginScreen({ onLogin }: { onLogin: (userId: string) => 
       if (data.success) {
         onLogin(userId);
       } else {
-        // User exists, just login
         onLogin(userId);
       }
     } catch (err) {
@@ -38,7 +37,12 @@ export default function LoginScreen({ onLogin }: { onLogin: (userId: string) => 
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>SkillPlay</Text>
+      <Image
+        source={require('../assets/icon.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <Text style={styles.appName}>SkillPlay</Text>
       <Text style={styles.subtitle}>Master. Progress. Earn.</Text>
 
       <View style={styles.form}>
@@ -79,7 +83,8 @@ export default function LoginScreen({ onLogin }: { onLogin: (userId: string) => 
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F0A1A', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  logo: { fontSize: 42, fontWeight: 'bold', color: '#7C3AED', marginBottom: 8 },
+  logo: { width: 100, height: 100, borderRadius: 20, marginBottom: 16 },
+  appName: { fontSize: 42, fontWeight: 'bold', color: '#7C3AED', marginBottom: 8 },
   subtitle: { fontSize: 16, color: '#6B7280', marginBottom: 48 },
   form: { width: '100%' },
   label: { fontSize: 14, color: '#9CA3AF', marginBottom: 8, fontWeight: '600' },

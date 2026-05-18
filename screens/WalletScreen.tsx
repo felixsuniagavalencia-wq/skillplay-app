@@ -83,6 +83,27 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
     );
   }
 
+  const getTxColor = (type: string) => {
+    if (type === 'prize') return '#FBBF24';      // Dorado — ganancia
+    if (type === 'deposit') return '#22C55E';    // Verde — ingreso
+    if (type === 'withdrawal') return '#EF4444'; // Rojo — salida
+    if (type === 'entry_fee') return '#EF4444';  // Rojo — gasto
+    return '#9CA3AF';
+  };
+
+  const getTxIcon = (type: string) => {
+    if (type === 'prize') return '🏆 Premio';
+    if (type === 'deposit') return '💳 Depósito';
+    if (type === 'withdrawal') return '🏦 Retiro';
+    if (type === 'entry_fee') return '🎮 Entry Fee';
+    return '📋 Transacción';
+  };
+
+  const getTxSign = (type: string) => {
+    if (type === 'withdrawal' || type === 'entry_fee') return '-';
+    return '+';
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -93,6 +114,7 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
         <View style={{ width: 60 }} />
       </View>
 
+      {/* KYC Banner */}
       {kycStatus !== 'verified' && (
         <TouchableOpacity style={styles.kycBanner} onPress={handleKyc} disabled={kycLoading}>
           {kycLoading ? (
@@ -110,26 +132,30 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
         </TouchableOpacity>
       )}
 
+      {/* KYC Verified — morado */}
       {kycStatus === 'verified' && (
         <View style={styles.kycVerified}>
           <Text style={styles.kycVerifiedText}>✅ Identity Verified</Text>
         </View>
       )}
 
+      {/* Balance Card */}
       <View style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>Available Balance</Text>
         <Text style={styles.balance}>{balance.toFixed(2)} EUR</Text>
         <View style={styles.btnRow}>
+          {/* Verde — ingreso */}
           <TouchableOpacity style={styles.topUpBtn} onPress={onTopUp}>
             <Text style={styles.topUpBtnText}>+ Add Credits</Text>
           </TouchableOpacity>
+          {/* Rojo — salida */}
           <TouchableOpacity
             style={[styles.withdrawBtn, kycStatus !== 'verified' && styles.withdrawBtnDisabled]}
             disabled={kycStatus !== 'verified'}
             onPress={() => setShowWithdraw(true)}
           >
             <Text style={styles.withdrawBtnText}>
-              {kycStatus !== 'verified' ? '🔒 Withdraw' : 'Withdraw'}
+              {kycStatus !== 'verified' ? '🔒 Withdraw' : '🏦 Withdraw'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -146,13 +172,11 @@ export default function WalletScreen({ userId, onBack, onTopUp }: {
         transactions.map((tx, i) => (
           <View key={i} style={styles.txRow}>
             <View>
-              <Text style={styles.txType}>
-                {tx.type === 'prize' ? '🏆 Prize' : tx.type === 'deposit' ? '💳 Deposit' : '💸 Withdrawal'}
-              </Text>
+              <Text style={styles.txType}>{getTxIcon(tx.type)}</Text>
               <Text style={styles.txDate}>{new Date(tx.createdAt?._seconds * 1000).toLocaleDateString()}</Text>
             </View>
-            <Text style={[styles.txAmount, tx.type === 'withdrawal' && styles.txNegative]}>
-              {tx.type === 'withdrawal' ? '-' : '+'}{tx.amount?.toFixed(2)} EUR
+            <Text style={[styles.txAmount, { color: getTxColor(tx.type) }]}>
+              {getTxSign(tx.type)}{tx.amount?.toFixed(2)} EUR
             </Text>
           </View>
         ))
@@ -173,15 +197,15 @@ const styles = StyleSheet.create({
   kycTitle: { color: 'white', fontWeight: 'bold', fontSize: 15 },
   kycSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
   kycArrow: { color: 'white', fontSize: 18 },
-  kycVerified: { backgroundColor: '#052e16', borderRadius: 12, padding: 12, marginBottom: 16, alignItems: 'center' },
-  kycVerifiedText: { color: '#22C55E', fontWeight: 'bold' },
+  kycVerified: { backgroundColor: '#2D1B69', borderRadius: 12, padding: 12, marginBottom: 16, alignItems: 'center', borderWidth: 1, borderColor: '#7C3AED' },
+  kycVerifiedText: { color: '#7C3AED', fontWeight: 'bold' },
   balanceCard: { backgroundColor: '#1F1535', borderRadius: 20, padding: 28, alignItems: 'center', marginBottom: 32 },
   balanceLabel: { color: '#6B7280', fontSize: 14, marginBottom: 8 },
-  balance: { fontSize: 48, fontWeight: 'bold', color: '#FBBF24', marginBottom: 24 },
+  balance: { fontSize: 48, fontWeight: 'bold', color: '#FBBF24', marginBottom: 24, textShadowColor: '#FBBF24', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 10 },
   btnRow: { flexDirection: 'row', gap: 12 },
   topUpBtn: { backgroundColor: '#22C55E', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 14, flex: 1, alignItems: 'center' },
   topUpBtnText: { color: 'white', fontSize: 15, fontWeight: 'bold' },
-  withdrawBtn: { backgroundColor: '#7C3AED', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 14, flex: 1, alignItems: 'center' },
+  withdrawBtn: { backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 14, flex: 1, alignItems: 'center' },
   withdrawBtnDisabled: { backgroundColor: '#374151' },
   withdrawBtnText: { color: 'white', fontSize: 15, fontWeight: 'bold' },
   sectionTitle: { color: '#9CA3AF', fontSize: 13, fontWeight: '600', marginBottom: 16 },
@@ -191,6 +215,5 @@ const styles = StyleSheet.create({
   txRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1F1535', borderRadius: 12, padding: 16, marginBottom: 10 },
   txType: { color: 'white', fontSize: 15, fontWeight: '600', marginBottom: 4 },
   txDate: { color: '#6B7280', fontSize: 13 },
-  txAmount: { color: '#22C55E', fontSize: 16, fontWeight: 'bold' },
-  txNegative: { color: '#EF4444' }
+  txAmount: { fontSize: 16, fontWeight: 'bold' },
 });
