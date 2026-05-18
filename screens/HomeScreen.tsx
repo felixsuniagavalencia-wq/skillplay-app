@@ -89,21 +89,22 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
       </Modal>
 
       <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onGoToProfile}>
-            <Text style={styles.title}>🧠 SkillPlay</Text>
+        {/* HEADER - Fila 1: Logo + Perfil */}
+        <View style={styles.headerRow1}>
+          <Text style={styles.title}>🧠 SkillPlay</Text>
+          <TouchableOpacity style={styles.profileBtn} onPress={onGoToProfile}>
+            <Text style={styles.profileBtnText}>👤 Perfil</Text>
           </TouchableOpacity>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.addCreditsBtn} onPress={onTopUp}>
-              <Text style={styles.addCreditsText}>+ Créditos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.walletBtn} onPress={onGoToWallet}>
-              <Text style={styles.walletText}>💰 {balance.toFixed(2)} EUR</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.profileBtn} onPress={onGoToProfile}>
-              <Text style={styles.profileBtnText}>👤</Text>
-            </TouchableOpacity>
-          </View>
+        </View>
+
+        {/* HEADER - Fila 2: Saldo + Créditos */}
+        <View style={styles.headerRow2}>
+          <TouchableOpacity style={styles.walletBtn} onPress={onGoToWallet}>
+            <Text style={styles.walletText}>💰 {balance.toFixed(2)} EUR</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.addCreditsBtn} onPress={onTopUp}>
+            <Text style={styles.addCreditsText}>+ Añadir Créditos</Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionTitle}>Category</Text>
@@ -173,15 +174,15 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F0A1A', padding: 24 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 32 },
+  headerRow1: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 12 },
+  headerRow2: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 8 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#7C3AED' },
-  headerRight: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  addCreditsBtn: { backgroundColor: '#22C55E', padding: 10, borderRadius: 10 },
-  addCreditsText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
-  walletBtn: { backgroundColor: '#1F1535', padding: 10, borderRadius: 10 },
-  walletText: { color: '#FBBF24', fontWeight: 'bold' },
-  profileBtn: { backgroundColor: '#1F1535', padding: 10, borderRadius: 10 },
-  profileBtnText: { fontSize: 18 },
+  profileBtn: { backgroundColor: '#1F1535', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  profileBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
+  walletBtn: { backgroundColor: '#1F1535', padding: 10, borderRadius: 10, flex: 1 },
+  walletText: { color: '#FBBF24', fontWeight: 'bold', textAlign: 'center' },
+  addCreditsBtn: { backgroundColor: '#22C55E', padding: 10, borderRadius: 10, flex: 1 },
+  addCreditsText: { color: 'white', fontWeight: 'bold', fontSize: 13, textAlign: 'center' },
   sectionTitle: { color: '#9CA3AF', fontSize: 13, fontWeight: '600', marginBottom: 12, marginTop: 20 },
   row: { marginBottom: 8 },
   chip: { backgroundColor: '#1F1535', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: '#374151' },

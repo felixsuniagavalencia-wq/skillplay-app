@@ -8,23 +8,43 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
   balance: number;
   onBack: () => void;
 }) {
-  const [iban, setIban] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
+  const [iban, setIban] = useState('');
+  const [bic, setBic] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankCountry, setBankCountry] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const validateIban = (iban: string) => {
-    const clean = iban.replace(/\s/g, '').toUpperCase();
+  const validateIban = (val: string) => {
+    const clean = val.replace(/\s/g, '').toUpperCase();
     return clean.length >= 15 && clean.length <= 34;
+  };
+
+  const validateBic = (val: string) => {
+    const clean = val.replace(/\s/g, '').toUpperCase();
+    return clean.length >= 8 && clean.length <= 11;
   };
 
   const handleWithdraw = async () => {
     if (!accountHolder.trim()) {
-      Alert.alert('Error', 'Por favor ingresa el nombre del titular de la cuenta');
+      Alert.alert('Error', 'Ingresa el nombre del titular de la cuenta');
       return;
     }
     if (!validateIban(iban)) {
-      Alert.alert('Error', 'Por favor ingresa un IBAN válido');
+      Alert.alert('Error', 'Ingresa un IBAN válido (15-34 caracteres)');
+      return;
+    }
+    if (!validateBic(bic)) {
+      Alert.alert('Error', 'Ingresa un BIC/SWIFT válido (8-11 caracteres)');
+      return;
+    }
+    if (!bankName.trim()) {
+      Alert.alert('Error', 'Ingresa el nombre del banco');
+      return;
+    }
+    if (!bankCountry.trim()) {
+      Alert.alert('Error', 'Ingresa el país del banco');
       return;
     }
     const amountNum = parseFloat(amount);
@@ -39,7 +59,7 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
 
     Alert.alert(
       'Confirmar retiro',
-      `¿Confirmas el retiro de ${amountNum.toFixed(2)} EUR al IBAN ${iban.replace(/\s/g, '').toUpperCase()}?`,
+      `¿Confirmas el retiro de ${amountNum.toFixed(2)} EUR?\n\nTitular: ${accountHolder}\nIBAN: ${iban.replace(/\s/g, '').toUpperCase()}\nBIC: ${bic.replace(/\s/g, '').toUpperCase()}\nBanco: ${bankName}\nPaís: ${bankCountry}`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Confirmar', onPress: () => submitWithdraw(amountNum) }
@@ -57,14 +77,17 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
           userId,
           amount: amountNum,
           iban: iban.replace(/\s/g, '').toUpperCase(),
-          accountHolder: accountHolder.trim()
+          bic: bic.replace(/\s/g, '').toUpperCase(),
+          accountHolder: accountHolder.trim(),
+          bankName: bankName.trim(),
+          bankCountry: bankCountry.trim()
         })
       });
       const data = await res.json();
       if (data.success) {
         Alert.alert(
           '✅ Retiro solicitado',
-          `Tu retiro de ${amountNum.toFixed(2)} EUR ha sido registrado. Será procesado en 24-48 horas hábiles.\n\nReferencia: ${data.reference || 'SP-' + Date.now()}`,
+          `Tu retiro de ${amountNum.toFixed(2)} EUR ha sido registrado.\n\nSerá procesado en 24-48 horas hábiles.\n\nReferencia: ${data.reference || 'SP-' + Date.now()}`,
           [{ text: 'OK', onPress: onBack }]
         );
       } else {
@@ -92,15 +115,20 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>Account Holder Name</Text>
+
+        <Text style={styles.sectionHeader}>👤 Datos del Titular</Text>
+
+        <Text style={styles.label}>Nombre completo del titular</Text>
         <TextInput
           style={styles.input}
-          placeholder="Full name as shown on bank account"
+          placeholder="Nombre como aparece en la cuenta bancaria"
           placeholderTextColor="#6B7280"
           value={accountHolder}
           onChangeText={setAccountHolder}
           autoCapitalize="words"
         />
+
+        <Text style={styles.sectionHeader}>🏦 Datos Bancarios</Text>
 
         <Text style={styles.label}>IBAN</Text>
         <TextInput
@@ -112,12 +140,46 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
           autoCapitalize="characters"
           autoCorrect={false}
         />
-        <Text style={styles.hint}>European bank account (SEPA)</Text>
+        <Text style={styles.hint}>International Bank Account Number</Text>
 
-        <Text style={styles.label}>Amount (EUR)</Text>
+        <Text style={styles.label}>BIC / SWIFT</Text>
         <TextInput
           style={styles.input}
-          placeholder="Minimum 5.00 EUR"
+          placeholder="XXXXXXXX o XXXXXXXXXXX"
+          placeholderTextColor="#6B7280"
+          value={bic}
+          onChangeText={setBic}
+          autoCapitalize="characters"
+          autoCorrect={false}
+        />
+        <Text style={styles.hint}>Bank Identifier Code (8 u 11 caracteres)</Text>
+
+        <Text style={styles.label}>Nombre del banco</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ej: Banco Santander, BBVA, Deutsche Bank"
+          placeholderTextColor="#6B7280"
+          value={bankName}
+          onChangeText={setBankName}
+          autoCapitalize="words"
+        />
+
+        <Text style={styles.label}>País del banco</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ej: España, Venezuela, México, USA"
+          placeholderTextColor="#6B7280"
+          value={bankCountry}
+          onChangeText={setBankCountry}
+          autoCapitalize="words"
+        />
+
+        <Text style={styles.sectionHeader}>💶 Importe</Text>
+
+        <Text style={styles.label}>Cantidad a retirar (EUR)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Mínimo 5.00 EUR"
           placeholderTextColor="#6B7280"
           value={amount}
           onChangeText={setAmount}
@@ -125,9 +187,10 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
         />
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoText}>⏱ Processing time: 24-48 business hours</Text>
-          <Text style={styles.infoText}>💳 Transfer via SEPA bank transfer</Text>
-          <Text style={styles.infoText}>📋 KYC verification required</Text>
+          <Text style={styles.infoText}>⏱ Procesamiento: 24-48 horas hábiles</Text>
+          <Text style={styles.infoText}>🌍 Transferencia internacional SWIFT/SEPA</Text>
+          <Text style={styles.infoText}>📋 Verificación KYC requerida</Text>
+          <Text style={styles.infoText}>💶 Importe mínimo: 5.00 EUR</Text>
         </View>
 
         <TouchableOpacity
@@ -138,7 +201,7 @@ export default function WithdrawScreen({ userId, balance, onBack }: {
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.btnText}>Request Withdrawal</Text>
+            <Text style={styles.btnText}>Solicitar Retiro</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -151,13 +214,14 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 24 },
   back: { color: '#7C3AED', fontSize: 16 },
   title: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-  balanceCard: { backgroundColor: '#1F1535', borderRadius: 20, padding: 24, alignItems: 'center', marginBottom: 32 },
+  balanceCard: { backgroundColor: '#1F1535', borderRadius: 20, padding: 24, alignItems: 'center', marginBottom: 24 },
   balanceLabel: { color: '#6B7280', fontSize: 14, marginBottom: 8 },
   balance: { fontSize: 40, fontWeight: 'bold', color: '#FBBF24' },
-  form: { gap: 8 },
-  label: { color: '#9CA3AF', fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: 12 },
+  form: { gap: 4 },
+  sectionHeader: { color: '#7C3AED', fontSize: 15, fontWeight: 'bold', marginTop: 20, marginBottom: 4 },
+  label: { color: '#9CA3AF', fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 10 },
   input: { backgroundColor: '#1F1535', borderRadius: 12, padding: 16, color: 'white', fontSize: 15, borderWidth: 1, borderColor: '#374151' },
-  hint: { color: '#6B7280', fontSize: 12, marginTop: 4 },
+  hint: { color: '#6B7280', fontSize: 11, marginTop: 3 },
   infoBox: { backgroundColor: '#1F1535', borderRadius: 12, padding: 16, marginTop: 20, gap: 8 },
   infoText: { color: '#9CA3AF', fontSize: 13 },
   btn: { backgroundColor: '#7C3AED', borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 24, marginBottom: 40 },
