@@ -19,6 +19,7 @@ export default function App() {
   const [userId, setUserId] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [questions, setQuestions] = useState<any[]>([]);
+  const [fullQuestions, setFullQuestions] = useState<any[]>([]);
   const [difficulty, setDifficulty] = useState('basico');
   const [result, setResult] = useState<any>(null);
   const [streak, setStreak] = useState(0);
@@ -29,15 +30,16 @@ export default function App() {
     setScreen('home');
   };
 
-  const handleStartGame = (sid: string, qs: any[], diff: string) => {
+  const handleStartGame = (sid: string, qs: any[], diff: string, fullQs?: any[]) => {
     setSessionId(sid);
     setQuestions(qs);
+    setFullQuestions(fullQs || []);
     setDifficulty(diff);
     setScreen('game');
   };
 
-  const handleFinish = (res: any) => {
-    setResult(res);
+  const handleFinish = (res: any, answeredQuestions?: any[]) => {
+    setResult({ ...res, answeredQuestions: answeredQuestions || [] });
     if (res?.accuracy === 100) setStreak(s => s + 1);
     else setStreak(0);
     setScreen('result');
@@ -60,6 +62,7 @@ export default function App() {
         <GameScreen
           sessionId={sessionId}
           questions={questions}
+          fullQuestions={fullQuestions}
           userId={userId}
           streak={streak}
           difficulty={difficulty}

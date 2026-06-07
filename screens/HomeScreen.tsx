@@ -10,55 +10,94 @@ const ENTRY_FEES = [0.50, 1.00, 2.50, 5.00, 10.00];
 
 export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp, onGoToProfile }: {
   userId: string;
-  onStartGame: (sessionId: string, questions: any[], difficulty: string) => void;
+  onStartGame: (sessionId: string, questions: any[], difficulty: string, fullQuestions?: any[]) => void;
   onGoToWallet: () => void;
   onTopUp: () => void;
   onGoToProfile: () => void;
 }) {
   const { t } = useTranslation();
   const [balance, setBalance] = useState(0);
+  const [freeGamesLeft, setFreeGamesLeft] = useState(0);
+  const [nextRefillAt, setNextRefillAt] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState('');
   const [category, setCategory] = useState('Geografia');
   const [difficulty, setDifficulty] = useState('basico');
   const [entryFee, setEntryFee] = useState(1.00);
   const [loading, setLoading] = useState(false);
+  const [loadingFree, setLoadingFree] = useState(false);
   const [error, setError] = useState('');
   const [showWelcome, setShowWelcome] = useState(true);
+
+  const isFreeGame = freeGamesLeft > 0;
 
   useEffect(() => {
     fetchBalance();
   }, []);
+
+  useEffect(() => {
+    if (!nextRefillAt) return;
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diff = nextRefillAt.getTime() - now.getTime();
+      if (diff <= 0) {
+        setCountdown('');
+        fetchBalance();
+        clearInterval(interval);
+        return;
+      }
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [nextRefillAt]);
 
   const fetchBalance = async () => {
     try {
       const res = await fetch(API_URL + '/api/wallet/balance/' + userId);
       const data = await res.json();
       setBalance(data.balance || 0);
+      setFreeGamesLeft(data.freeGamesLeft ?? 15);
+      if (data.nextRefillAt) {
+        setNextRefillAt(new Date(data.nextRefillAt));
+      }
     } catch (err) {}
   };
 
-  const handleStartGame = async () => {
-    if (balance < entryFee) {
+  const handleStartGame = async (useFreeGame: boolean) => {
+    if (!useFreeGame && balance < entryFee) {
       setError(t('home_insufficient', { amount: entryFee.toFixed(2) }));
       return;
     }
-    setLoading(true);
+    if (useFreeGame) setLoadingFree(true);
+    else setLoading(true);
     setError('');
     try {
       const res = await fetch(API_URL + '/api/game/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, difficulty, entryFee, userId })
+        body: JSON.stringify({
+          category,
+          difficulty,
+          entryFee: useFreeGame ? 0 : entryFee,
+          userId,
+          isFreeGame: useFreeGame
+        })
       });
       const data = await res.json();
       if (data.sessionId) {
-        onStartGame(data.sessionId, data.questions, difficulty);
+        setFreeGamesLeft(data.freeGamesLeft ?? freeGamesLeft);
+        if (data.nextRefillAt) setNextRefillAt(new Date(data.nextRefillAt));
+        onStartGame(data.sessionId, data.questions, difficulty, data.fullQuestions);
       } else {
-        setError(t('error_connection'));
+        setError(data.error || t('error_connection'));
       }
     } catch (err) {
       setError(t('error_connection'));
     }
     setLoading(false);
+    setLoadingFree(false);
   };
 
   return (
@@ -70,9 +109,9 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
             <Text style={styles.modalTitle}>{t('welcome_title')}</Text>
             <Text style={styles.modalSubtitle}>{t('welcome_subtitle')}</Text>
             <View style={styles.modalFeatures}>
-              <Text style={styles.modalFeature}>{t('welcome_feature1')}</Text>
-              <Text style={styles.modalFeature}>{t('welcome_feature2')}</Text>
-              <Text style={styles.modalFeature}>{t('welcome_feature3')}</Text>
+              <Text style={styles.modalFeature}>🎮 {t('welcome_feature1')}</Text>
+              <Text style={styles.modalFeature}>🎓 15 partidas gratis para empezar</Text>
+              <Text style={styles.modalFeature}>💰 {t('welcome_feature3')}</Text>
             </View>
             <TouchableOpacity style={styles.modalBtnPrimary} onPress={() => { setShowWelcome(false); onTopUp(); }}>
               <Text style={styles.modalBtnPrimaryText}>{t('welcome_btn_primary')}</Text>
@@ -103,6 +142,24 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
             <Text style={styles.addCreditsText}>{t('home_add_credits')}</Text>
           </TouchableOpacity>
         </View>
+
+        {isFreeGame ? (
+          <View style={styles.freeGameBanner}>
+            <Text style={styles.freeGameEmoji}>🎁</Text>
+            <View>
+              <Text style={styles.freeGameTitle}>¡Partida Gratis disponible!</Text>
+              <Text style={styles.freeGameSubtitle}>Te quedan {freeGamesLeft} partidas gratis</Text>
+            </View>
+          </View>
+        ) : countdown ? (
+          <View style={styles.countdownBanner}>
+            <Text style={styles.countdownEmoji}>⏳</Text>
+            <View>
+              <Text style={styles.countdownTitle}>Próximas 5 partidas gratis en:</Text>
+              <Text style={styles.countdownTimer}>{countdown}</Text>
+            </View>
+          </View>
+        ) : null}
 
         <Text style={styles.sectionTitle}>{t('home_category')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
@@ -144,8 +201,8 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
 
         <TouchableOpacity
           style={[styles.startBtn, balance < entryFee && styles.startBtnDisabled]}
-          onPress={handleStartGame}
-          disabled={loading}
+          onPress={() => handleStartGame(false)}
+          disabled={loading || loadingFree || balance < entryFee}
         >
           {loading ? (
             <ActivityIndicator color="white" />
@@ -155,6 +212,21 @@ export default function HomeScreen({ userId, onStartGame, onGoToWallet, onTopUp,
             </Text>
           )}
         </TouchableOpacity>
+
+        {isFreeGame && (
+          <TouchableOpacity
+            style={styles.freeBtn}
+            onPress={() => handleStartGame(true)}
+            disabled={loading || loadingFree}
+          >
+            {loadingFree ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.startBtnText}>🎁 Jugar Gratis ({freeGamesLeft} restantes)</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
     </>
   );
@@ -185,9 +257,18 @@ const styles = StyleSheet.create({
   balanceInfoAmount: { color: '#FBBF24', fontWeight: 'bold', textShadowColor: '#FBBF24', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 6 },
   addCreditsLink: { color: '#22C55E', fontWeight: 'bold', fontSize: 14 },
   error: { color: '#EF4444', textAlign: 'center', marginTop: 16 },
-  startBtn: { backgroundColor: '#7C3AED', borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 32, marginBottom: 40 },
+  startBtn: { backgroundColor: '#7C3AED', borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 32, marginBottom: 12 },
   startBtnDisabled: { backgroundColor: '#4C1D95', opacity: 0.6 },
   startBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  freeBtn: { backgroundColor: '#22C55E', borderRadius: 12, padding: 18, alignItems: 'center', marginBottom: 40 },
+  freeGameBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#064E3B', borderRadius: 12, padding: 16, marginBottom: 8, gap: 12, borderWidth: 1, borderColor: '#22C55E' },
+  freeGameEmoji: { fontSize: 32 },
+  freeGameTitle: { color: '#22C55E', fontWeight: 'bold', fontSize: 16 },
+  freeGameSubtitle: { color: '#6EE7B7', fontSize: 13 },
+  countdownBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1F1535', borderRadius: 12, padding: 16, marginBottom: 8, gap: 12, borderWidth: 1, borderColor: '#374151' },
+  countdownEmoji: { fontSize: 32 },
+  countdownTitle: { color: '#9CA3AF', fontSize: 13, marginBottom: 4 },
+  countdownTimer: { color: '#FBBF24', fontWeight: 'bold', fontSize: 24 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   modalBox: { backgroundColor: '#1F1535', borderRadius: 24, padding: 32, width: '100%', alignItems: 'center' },
   modalLogo: { width: 100, height: 100, marginBottom: 16, borderRadius: 20 },

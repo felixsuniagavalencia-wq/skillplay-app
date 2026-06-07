@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "skillplay-app",
+    "name": "SkillPlay",
     "slug": "skillplay-app",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,7 +22,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.skillplay.skillplayapp"
+      "package": "com.skillplay.skillplayapp",
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/favicon.png"

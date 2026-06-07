@@ -10,37 +10,59 @@ const TIME_LIMITS: Record<string, number> = {
   experto: 7
 };
 
-export default function GameScreen({ sessionId, questions, userId, streak, difficulty, onFinish }: {
+const EPIC_TIME_LIMIT = 7;
+
+export default function GameScreen({ sessionId, questions, fullQuestions, userId, streak, difficulty, onFinish }: {
   sessionId: string;
   questions: any[];
+  fullQuestions: any[];
   userId: string;
   streak: number;
   difficulty: string;
-  onFinish: (result: any) => void;
+  onFinish: (result: any, answeredQuestions: any[]) => void;
 }) {
-  const timeLimit = TIME_LIMITS[difficulty] || 20;
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<any[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [timeStart, setTimeStart] = useState(Date.now());
   const [submitting, setSubmitting] = useState(false);
+  const [showEpicIntro, setShowEpicIntro] = useState(false);
   const timerRef = useRef<any>(null);
   const animatedWidth = useRef(new Animated.Value(1)).current;
+  const epicAnim = useRef(new Animated.Value(0)).current;
+
+  const isEpic = questions[current]?.isEpic || false;
+  const epicPrize = questions[current]?.epicPrize || 0;
+  const timeLimit = isEpic ? EPIC_TIME_LIMIT : (TIME_LIMITS[difficulty] || 20);
 
   useEffect(() => {
-    startTimer();
+    if (isEpic) {
+      setShowEpicIntro(true);
+      Animated.sequence([
+        Animated.timing(epicAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.delay(2000),
+        Animated.timing(epicAnim, { toValue: 0, duration: 300, useNativeDriver: true })
+      ]).start(() => {
+        setShowEpicIntro(false);
+        startTimer();
+      });
+    } else {
+      startTimer();
+    }
     return () => clearInterval(timerRef.current);
   }, [current]);
 
   const startTimer = () => {
-    setTimeLeft(timeLimit);
+    const limit = isEpic ? EPIC_TIME_LIMIT : (TIME_LIMITS[difficulty] || 20);
+    setTimeLeft(limit);
     setTimeStart(Date.now());
     clearInterval(timerRef.current);
 
+    animatedWidth.setValue(1);
     Animated.timing(animatedWidth, {
       toValue: 0,
-      duration: timeLimit * 1000,
+      duration: limit * 1000,
       useNativeDriver: false
     }).start();
 
@@ -48,7 +70,7 @@ export default function GameScreen({ sessionId, questions, userId, streak, diffi
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          handleAnswer(-1); // tiempo agotado
+          handleAnswer(-1);
           return 0;
         }
         return prev - 1;
@@ -61,7 +83,21 @@ export default function GameScreen({ sessionId, questions, userId, streak, diffi
     clearInterval(timerRef.current);
     setSelected(index);
     const responseTimeMs = Date.now() - timeStart;
-    const newAnswers = [...answers, { selected: index === -1 ? 0 : index, responseTimeMs, timedOut: index === -1 }];
+    const correctIndex = fullQuestions[current]?.correct ?? questions[current]?.correct;
+    const isCorrect = index === correctIndex;
+
+    const newAnswers = [...answers, {
+      selected: index === -1 ? 0 : index,
+      responseTimeMs,
+      timedOut: index === -1,
+      isCorrect,
+      correctIndex,
+      question: questions[current]?.question,
+      options: questions[current]?.options,
+      selectedOption: index >= 0 ? questions[current]?.options[index] : 'Time out',
+      correctOption: questions[current]?.options[correctIndex],
+      isEpic: questions[current]?.isEpic || false
+    }];
     setAnswers(newAnswers);
 
     setTimeout(async () => {
@@ -75,12 +111,16 @@ export default function GameScreen({ sessionId, questions, userId, streak, diffi
           const res = await fetch(API_URL + '/api/game/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, answers: newAnswers, streak })
+            body: JSON.stringify({
+              sessionId,
+              answers: newAnswers.map(a => ({ selected: a.selected, responseTimeMs: a.responseTimeMs })),
+              streak
+            })
           });
           const data = await res.json();
-          onFinish(data);
+          onFinish(data, newAnswers);
         } catch (err) {
-          onFinish({ error: true });
+          onFinish({ error: true }, newAnswers);
         }
         setSubmitting(false);
       }
@@ -96,43 +136,65 @@ export default function GameScreen({ sessionId, questions, userId, streak, diffi
     );
   }
 
+  if (showEpicIntro) {
+    return (
+      <Animated.View style={[styles.epicIntro, { opacity: epicAnim }]}>
+        <Text style={styles.epicIntroEmoji}>⚡</Text>
+        <Text style={styles.epicIntroTitle}>¡PREGUNTA ÉPICA!</Text>
+        <Text style={styles.epicIntroSubtitle}>Si aciertas esta pregunta ganas</Text>
+        <Text style={styles.epicIntroPrize}>+{epicPrize.toFixed(2)} EUR</Text>
+        <Text style={styles.epicIntroTime}>Solo tienes {EPIC_TIME_LIMIT} segundos</Text>
+      </Animated.View>
+    );
+  }
+
   const question = questions[current];
   const timerColor = timeLeft > 10 ? '#22C55E' : timeLeft > 5 ? '#FBBF24' : '#EF4444';
 
   return (
-    <View style={styles.container}>
-      {/* Progress bar */}
+    <View style={[styles.container, isEpic && styles.epicContainer]}>
       <View style={styles.progressBar}>
         <View style={[styles.progress, { width: `${((current + 1) / questions.length) * 100}%` as any }]} />
       </View>
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.questionCount}>Question {current + 1} of {questions.length}</Text>
-        <Text style={[styles.timer, { color: timerColor }]}>{timeLeft}s</Text>
+        <Text style={[styles.timer, { color: isEpic ? '#FBBF24' : timerColor }]}>{timeLeft}s</Text>
       </View>
 
-      {/* Timer bar */}
       <View style={styles.timerBarBg}>
         <Animated.View style={[styles.timerBar, {
           width: animatedWidth.interpolate({
             inputRange: [0, 1],
             outputRange: ['0%', '100%']
           }),
-          backgroundColor: timerColor
+          backgroundColor: isEpic ? '#FBBF24' : timerColor
         }]} />
       </View>
 
-      <Text style={styles.question}>{question.question}</Text>
+      {isEpic && (
+        <View style={styles.epicBanner}>
+          <Text style={styles.epicBannerText}>⚡ PREGUNTA ÉPICA — Acierta y gana {epicPrize.toFixed(2)} EUR extra</Text>
+        </View>
+      )}
+
+      <Text style={[styles.question, isEpic && styles.epicQuestion]}>{question.question}</Text>
 
       <View style={styles.options}>
         {question.options.map((option: string, index: number) => (
           <TouchableOpacity
             key={index}
-            style={[styles.option, selected === index && styles.optionSelected]}
+            style={[
+              styles.option,
+              isEpic && styles.epicOption,
+              selected === index && (isEpic ? styles.epicOptionSelected : styles.optionSelected)
+            ]}
             onPress={() => handleAnswer(index)}
             disabled={selected !== null}>
-            <Text style={[styles.optionText, selected === index && styles.optionTextSelected]}>
+            <Text style={[
+              styles.optionText,
+              selected === index && styles.optionTextSelected
+            ]}>
               {option}
             </Text>
           </TouchableOpacity>
@@ -144,6 +206,7 @@ export default function GameScreen({ sessionId, questions, userId, streak, diffi
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F0A1A', padding: 24, paddingTop: 60 },
+  epicContainer: { backgroundColor: '#1A0A00' },
   center: { flex: 1, backgroundColor: '#0F0A1A', alignItems: 'center', justifyContent: 'center' },
   loadingText: { color: '#7C3AED', fontSize: 16, marginTop: 16 },
   progressBar: { height: 6, backgroundColor: '#1F1535', borderRadius: 3, marginBottom: 16 },
@@ -151,12 +214,23 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   questionCount: { color: '#6B7280', fontSize: 13 },
   timer: { fontSize: 20, fontWeight: 'bold' },
-  timerBarBg: { height: 4, backgroundColor: '#1F1535', borderRadius: 2, marginBottom: 32 },
+  timerBarBg: { height: 4, backgroundColor: '#1F1535', borderRadius: 2, marginBottom: 16 },
   timerBar: { height: 4, borderRadius: 2 },
+  epicBanner: { backgroundColor: '#78350F', borderRadius: 10, padding: 12, marginBottom: 20, borderWidth: 1, borderColor: '#FBBF24' },
+  epicBannerText: { color: '#FBBF24', fontWeight: 'bold', fontSize: 13, textAlign: 'center' },
   question: { color: 'white', fontSize: 22, fontWeight: 'bold', marginBottom: 40, lineHeight: 32 },
+  epicQuestion: { color: '#FDE68A', fontSize: 20 },
   options: { gap: 12 },
   option: { backgroundColor: '#1F1535', borderRadius: 12, padding: 18, borderWidth: 1, borderColor: '#374151' },
+  epicOption: { borderColor: '#78350F' },
   optionSelected: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+  epicOptionSelected: { backgroundColor: '#D97706', borderColor: '#FBBF24' },
   optionText: { color: '#D1D5DB', fontSize: 16 },
-  optionTextSelected: { color: 'white', fontWeight: 'bold' }
+  optionTextSelected: { color: 'white', fontWeight: 'bold' },
+  epicIntro: { flex: 1, backgroundColor: '#1A0A00', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  epicIntroEmoji: { fontSize: 80, marginBottom: 16 },
+  epicIntroTitle: { fontSize: 36, fontWeight: 'bold', color: '#FBBF24', marginBottom: 16, textAlign: 'center' },
+  epicIntroSubtitle: { fontSize: 18, color: '#D1D5DB', marginBottom: 8, textAlign: 'center' },
+  epicIntroPrize: { fontSize: 48, fontWeight: 'bold', color: '#22C55E', marginBottom: 16 },
+  epicIntroTime: { fontSize: 14, color: '#6B7280', textAlign: 'center' }
 });
